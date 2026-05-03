@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>トイレ配列ゲーム(難易度＆画面遷移版)</title>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            text-align: center;
+            background: linear-gradient(135deg, #e0f7fa 0%, #80deea 100%);
+            min-height: 100vh;
+            margin: 0;
+            padding-top: 30px;
+        }
+        h2 { 
+            color: #006064; 
+            text-shadow: 1px 1px 2px rgba(255,255,255,0.8);
+            margin-bottom: 10px;
+        }
+        
+        #stats-panel {
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 10px 20px;
+            border-radius: 50px;
+            display: inline-block;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            font-size: 18px;
+            font-weight: bold;
+            color: #37474f;
+        }
+        .stats-highlight { color: #1976d2; }
+        
+        #reset-stats-btn {
+            font-size: 12px;
+            padding: 5px 10px;
+            margin-left: 15px;
+            background-color: #cfd8dc;
+            color: #455a64;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        #reset-stats-btn:hover { background-color: #b0bec5; }
+
+        /* 画面のパネル共通スタイル */
+        .screen-panel {
+            background-color: rgba(255, 255, 255, 0.95);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+            display: inline-block;
+            margin-top: 10px;
+            max-width: 90%;
+        }
+        
+        /* 最初は難易度画面以外を隠す */
+        #turn-screen, #game-screen { display: none; }
+
+        .btn {
+            font-size: 20px;
+            font-weight: bold;
+            padding: 15px 30px;
+            margin: 10px;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            color: white;
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        }
+        .btn:hover { transform: translateY(-3px); box-shadow: 0 6px 12px rgba(0,0,0,0.3); }
+        
+        /* 難易度ボタンの色 */
+        #btn-easy { background-color: #4caf50; }
+        #btn-normal { background-color: #ff9800; }
+        #btn-hard { background-color: #e53935; }
+
+        /* ターンボタンの色 */
+        #btn-first { background-color: #1976d2; }
+        #btn-second { background-color: #d32f2f; }
+        #btn-random { background-color: #7b1fa2; }
+        
+        /* 戻るボタン */
+        .back-btn { background-color: #90a4ae; font-size: 16px; padding: 10px 20px; margin-top: 20px; }
+
+        .urinal-container {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 20px;
+            padding: 25px;
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 20px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+            display: inline-flex;
+            flex-wrap: wrap;
+            max-width: 90%;
+            border: 4px solid transparent;
+            transition: border-color 0.3s;
+        }
+        
+        .turn-player { border-color: #bbdefb; }
+        .turn-cpu { border-color: #ffcdd2; }
+
+        .urinal {
+            width: 65px;
+            height: 85px;
+            font-size: 35px;
+            cursor: pointer;
+            background-color: #f5f5f5;
+            border: 3px solid #cfd8dc;
+            border-radius: 12px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .urinal:hover {
+            background-color: #eceff1;
+            transform: scale(1.08);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+        
+        @keyframes popIn {
+            0% { transform: scale(0.5); opacity: 0; }
+            70% { transform: scale(1.2); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .occupied-player {
+            background-color: #bbdefb;
+            border-color: #42a5f5;
+            cursor: not-allowed;
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+        .occupied-cpu {
+            background-color: #ffcdd2;
+            border-color: #ef5350;
+            cursor: not-allowed;
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+        .cleaning {
+            background-color: #fff9c4;
+            border-color: #fbc02d;
+            cursor: not-allowed;
+            font-size: 30px;
+        }
+        .occupied-player:hover, .occupied-cpu:hover, .cleaning:hover {
+            transform: none;
+            box-shadow: none;
+        }
+        
+        #info-panel { margin-bottom: 20px; }
+        #message {
+            font-size: 24px;
+            font-weight: bold;
+            min-height: 40px;
+            padding: 10px 25px;
+            border-radius: 50px;
+            background-color: #ffffff;
+            display: inline-block;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+        }
+        
+        #result-buttons {
+            display: none;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 10px;
+        }
+        
+        #retry-btn { background-color: #00897b; }
+        #title-btn { background-color: #546e7a; }
+
+    </style>
+</head>
+<body>
+
+    <h2>🚽 男子トイレ陣取り対戦 🚽</h2>
+    
+    <div id="stats-panel">
+        通算成績: <span id="win-count" class="stats-highlight">0</span> 勝 <span id="loss-count" class="stats-highlight">0</span> 敗
+        <button id="reset-stats-btn" onclick="resetStats()">履歴リセット</button>
+    </div>
+    <br>
+    
+    <!-- STEP 1: 難易度選択画面 -->
+    <div id="difficulty-screen" class="screen-panel">
+        <h3 style="color: #37474f;">難易度を選んでください</h3>
+        <button id="btn-easy" class="btn" onclick="selectDifficulty('easy')">初級 (ランダム)</button>
+        <button id="btn-normal" class="btn" onclick="selectDifficulty('normal')">中級 (意地悪)</button>
+        <button id="btn-hard" class="btn" onclick="selectDifficulty('hard')">上級 (鬼モード)</button>
+    </div>
+
+    <!-- STEP 2: ターン選択画面 -->
+    <div id="turn-screen" class="screen-panel">
+        <h3 style="color: #37474f;">順番を選んでください</h3>
+        <p style="color: #607d8b; font-weight: bold;" id="selected-diff-text"></p>
+        <button id="btn-first" class="btn" onclick="startGame('player')">あなたが先攻</button>
+        <button id="btn-second" class="btn" onclick="startGame('cpu')">CPUが先攻</button>
+        <button id="btn-random" class="btn" onclick="startGame('random')">ランダム</button>
+        <br>
+        <button class="btn back-btn" onclick="showDifficultyScreen()">◀ 難易度選択に戻る</button>
+    </div>
+
+    <!-- STEP 3: ゲーム画面 -->
+    <div id="game-screen">
+        <div id="info-panel">
+            <div id="message"></div>
+        </div>
+        <div class="urinal-container" id="urinals"></div>
+        
+        <div id="result-buttons">
+            <button id="retry-btn" class="btn" onclick="retryGame()">もう一度（同じ設定）</button>
+            <button id="title-btn" class="btn" onclick="showDifficultyScreen()">タイトルに戻る</button>
+        </div>
+    </div>
+
+    <script>
+        const size = 10;
+        let state = new Array(size).fill(0); 
+        let isPlayerTurn = true; 
+        let isGameOver = false;
+        
+        let currentDifficulty = 'easy';
+        let currentTurnChoice = 'player';
+        
+        let wins = 0;
+        let losses = 0;
+
+        window.onload = () => { loadStats(); };
+
+        function loadStats() {
+            const savedWins = localStorage.getItem('toiletGameWins');
+            const savedLosses = localStorage.getItem('toiletGameLosses');
+            if (savedWins !== null) wins = parseInt(savedWins);
+            if (savedLosses !== null) losses = parseInt(savedLosses);
+            updateStatsUI();
+        }
+
+        function saveStats() {
+            localStorage.setItem('toiletGameWins', wins);
+            localStorage.setItem('toiletGameLosses', losses);
+            updateStatsUI();
+        }
+
+        function updateStatsUI() {
+            document.getElementById('win-count').innerText = wins;
+            document.getElementById('loss-count').innerText = losses;
+        }
+
+        function resetStats() {
+            if (confirm('通算成績をリセットしてもよろしいですか？')) {
+                wins = 0;
+                losses = 0;
+                saveStats();
+            }
+        }
+
+        // --- 画面遷移の処理 ---
+        function showDifficultyScreen() {
+            document.getElementById('turn-screen').style.display = 'none';
+            document.getElementById('game-screen').style.display = 'none';
+            document.getElementById('difficulty-screen').style.display = 'inline-block';
+        }
+
+        function selectDifficulty(diff) {
+            currentDifficulty = diff;
+            
+            // 選んだ難易度を次の画面に表示する
+            const diffNames = { 'easy': '初級', 'normal': '中級', 'hard': '上級' };
+            document.getElementById('selected-diff-text').innerText = `選択中: ${diffNames[diff]}`;
+            
+            document.getElementById('difficulty-screen').style.display = 'none';
+            document.getElementById('turn-screen').style.display = 'inline-block';
+        }
+
+        function startGame(turnChoice) {
+            currentTurnChoice = turnChoice; 
+            document.getElementById('turn-screen').style.display = 'none';
+            document.getElementById('game-screen').style.display = 'block';
+            document.getElementById('result-buttons').style.display = 'none'; 
+
+            if (turnChoice === 'player') isPlayerTurn = true;
+            else if (turnChoice === 'cpu') isPlayerTurn = false;
+            else isPlayerTurn = Math.random() < 0.5;
+
+            state = new Array(size).fill(0);
+            isGameOver = false;
+            
+            const numCleaning = Math.floor(Math.random() * 2) + 1; 
+            for(let i = 0; i < numCleaning; i++) {
+                let randIdx;
+                do { randIdx = Math.floor(Math.random() * size); } while(state[randIdx] === 3);
+                state[randIdx] = 3;
+            }
+
+            init(); 
+            updateTurnUI();
+            
+            if (!isPlayerTurn) {
+                setTimeout(cpuMove, 800);
+            }
+        }
+
+        function retryGame() {
+            startGame(currentTurnChoice); 
+        }
+
+        function updateTurnUI() {
+            const msgEl = document.getElementById('message');
+            const container = document.getElementById('urinals');
+            if (isGameOver) return; 
+
+            if (isPlayerTurn) {
+                msgEl.innerText = 'あなたのターンです（青）';
+                msgEl.style.color = '#1976d2';
+                msgEl.style.border = '2px solid #1976d2';
+                container.className = 'urinal-container turn-player';
+            } else {
+                msgEl.innerText = 'CPUが考えています...（赤）';
+                msgEl.style.color = '#d32f2f';
+                msgEl.style.border = '2px solid #d32f2f';
+                container.className = 'urinal-container turn-cpu';
+            }
+        }
+
+        function init() {
+            const container = document.getElementById('urinals');
+            container.innerHTML = '';
+            for (let i = 0; i < size; i++) {
+                const btn = document.createElement('button');
+                btn.className = 'urinal';
+                if (state[i] === 3) {
+                    btn.classList.add('cleaning');
+                    btn.innerText = '🚧';
+                } else {
+                    btn.innerText = '🚽';
+                    btn.onclick = () => {
+                        if (isPlayerTurn && !isGameOver) placePerson(i, 'player');
+                    };
+                }
+                container.appendChild(btn);
+            }
+        }
+
+        // 指定した盤面（board）で置ける場所のリストを返す関数（AI計算用）
+        function getValidMoves(board) {
+            let moves = [];
+            for (let i = 0; i < size; i++) {
+                if (board[i] !== 0) continue;
+                if (i > 0 && (board[i - 1] === 1 || board[i - 1] === 2)) continue;
+                if (i < size - 1 && (board[i + 1] === 1 || board[i + 1] === 2)) continue;
+                moves.push(i);
+            }
+            return moves;
+        }
+
+        function isValid(index) {
+            return getValidMoves(state).includes(index);
+        }
+
+        function placePerson(index, turn) {
+            if (!isValid(index)) {
+                if (turn === 'player') {
+                    const msgEl = document.getElementById('message');
+                    const originalText = msgEl.innerText;
+                    const originalBorder = msgEl.style.border;
+                    msgEl.innerText = 'そこはルール違反です！';
+                    msgEl.style.color = 'white';
+                    msgEl.style.backgroundColor = '#d32f2f';
+                    document.getElementById('urinals').style.transform = 'translateX(5px)';
+                    setTimeout(() => document.getElementById('urinals').style.transform = 'translateX(-5px)', 50);
+                    setTimeout(() => document.getElementById('urinals').style.transform = 'translateX(5px)', 100);
+                    setTimeout(() => document.getElementById('urinals').style.transform = 'translateX(0)', 150);
+
+                    setTimeout(() => {
+                        if(!isGameOver) {
+                            msgEl.innerText = originalText;
+                            msgEl.style.color = '#1976d2';
+                            msgEl.style.backgroundColor = '#ffffff';
+                            msgEl.style.border = originalBorder;
+                        }
+                    }, 1000);
+                }
+                return;
+            }
+            
+            state[index] = turn === 'player' ? 1 : 2;
+            const buttons = document.getElementsByClassName('urinal');
+            
+            if (turn === 'player') {
+                buttons[index].classList.add('occupied-player');
+                buttons[index].innerText = '🧍‍♂️';
+            } else {
+                buttons[index].classList.add('occupied-cpu');
+                buttons[index].innerText = '🤖';
+            }
+
+            if (checkGameOver(turn)) return;
+
+            isPlayerTurn = (turn === 'cpu'); 
+            updateTurnUI(); 
+
+            if (!isPlayerTurn) setTimeout(cpuMove, 800);
+        }
+
+        // --- CPUのAIロジック ---
+        function cpuMove() {
+            if (isGameOver) return;
+            let availableSpots = getValidMoves(state);
+            if (availableSpots.length === 0) return;
+
+            let chosenIndex;
+
+            if (currentDifficulty === 'easy') {
+                // 【初級】完全にランダム
+                chosenIndex = availableSpots[Math.floor(Math.random() * availableSpots.length)];
+            } 
+            else if (currentDifficulty === 'normal') {
+                // 【中級】プレイヤーの置ける場所が一番少なくなるように嫌がらせする
+                let minOpponentMoves = Infinity;
+                let bestMoves = [];
+                for (let move of availableSpots) {
+                    let tempState = [...state];
+                    tempState[move] = 2; // 仮に置いてみる
+                    let opponentMovesCount = getValidMoves(tempState).length; // プレイヤーの残り選択肢
+                    
+                    if (opponentMovesCount < minOpponentMoves) {
+                        minOpponentMoves = opponentMovesCount;
+                        bestMoves = [move];
+                    } else if (opponentMovesCount === minOpponentMoves) {
+                        bestMoves.push(move);
+                    }
+                }
+                chosenIndex = bestMoves[Math.floor(Math.random() * bestMoves.length)];
+            } 
+            else if (currentDifficulty === 'hard') {
+                // 【上級】ミニマックス法で数手先まで完全先読みして絶対に負けない手を探す
+                let bestScore = -Infinity;
+                let bestMoves = [];
+                for (let move of availableSpots) {
+                    let tempState = [...state];
+                    tempState[move] = 2;
+                    // depth(深さ)を0からスタートし、先の展開をシミュレーション
+                    let score = minimax(tempState, false, 0); 
+                    if (score > bestScore) {
+                        bestScore = score;
+                        bestMoves = [move];
+                    } else if (score === bestScore) {
+                        bestMoves.push(move);
+                    }
+                }
+                chosenIndex = bestMoves[Math.floor(Math.random() * bestMoves.length)];
+            }
+
+            placePerson(chosenIndex, 'cpu');
+        }
+
+        // 上級用：未来の勝敗を計算する再帰関数（ミニマックス法）
+        function minimax(board, isCpuTurn, depth) {
+            let avail = getValidMoves(board);
+            if (avail.length === 0) {
+                // 置ける場所がない＝今のターンの人が負け
+                // できるだけ早く勝ちたいので、深さ(depth)を引いて点数を調整
+                return isCpuTurn ? -10 + depth : 10 - depth; 
+            }
+            
+            if (isCpuTurn) {
+                let maxEval = -Infinity;
+                for (let m of avail) {
+                    let nextBoard = [...board];
+                    nextBoard[m] = 2;
+                    let eval = minimax(nextBoard, false, depth + 1);
+                    maxEval = Math.max(maxEval, eval);
+                }
+                return maxEval;
+            } else {
+                let minEval = Infinity;
+                for (let m of avail) {
+                    let nextBoard = [...board];
+                    nextBoard[m] = 1;
+                    let eval = minimax(nextBoard, true, depth + 1);
+                    minEval = Math.min(minEval, eval);
+                }
+                return minEval;
+            }
+        }
+
+        function checkGameOver(lastTurn) {
+            let canPlace = getValidMoves(state).length > 0;
+            
+            if (!canPlace) {
+                isGameOver = true;
+                const msgEl = document.getElementById('message');
+                msgEl.style.backgroundColor = '#ffffff'; 
+                
+                if (lastTurn === 'player') {
+                    msgEl.innerText = 'CPUはもう配置できません！あなたの勝ちです🏆';
+                    msgEl.style.color = '#2e7d32';
+                    msgEl.style.border = '3px solid #2e7d32';
+                    wins++; 
+                } else {
+                    msgEl.innerText = 'あなたはもう配置できません... CPUの勝ちです🤖';
+                    msgEl.style.color = '#d32f2f';
+                    msgEl.style.border = '3px solid #d32f2f';
+                    losses++; 
+                }
+                
+                saveStats(); 
+                document.getElementById('result-buttons').style.display = 'flex';
+                document.getElementById('urinals').className = 'urinal-container'; 
+                return true;
+            }
+            return false;
+        }
+
+    </script>
+
+</body>
+</html>
