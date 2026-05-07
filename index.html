@@ -17,6 +17,7 @@
             min-height: 100vh;
             margin: 0;
             padding-top: 30px;
+            padding-bottom: 50px; /* スクロールしきれるように下部の余白を追加 */
         }
         h2 { 
             color: #006064; 
@@ -53,12 +54,13 @@
         /* 画面のパネル共通スタイル */
         .screen-panel {
             background-color: rgba(255, 255, 255, 0.95);
-            padding: 40px;
+            padding: 40px 20px; /* スマホ向けに横のパディングを調整 */
             border-radius: 20px;
             box-shadow: 0 8px 16px rgba(0,0,0,0.1);
             display: inline-block;
             margin-top: 10px;
-            max-width: 90%;
+            width: 85%; /* 画面幅に合わせる */
+            max-width: 400px;
         }
         
         /* 最初は難易度画面以外を隠す */
@@ -68,13 +70,15 @@
             font-size: 20px;
             font-weight: bold;
             padding: 15px 30px;
-            margin: 10px;
+            margin: 10px auto;
             border: none;
             border-radius: 50px;
             cursor: pointer;
             color: white;
             transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            display: block; /* ボタンも縦に並べやすくする */
+            width: 80%;
         }
         .btn:hover { transform: translateY(-3px); box-shadow: 0 6px 12px rgba(0,0,0,0.3); }
         
@@ -89,20 +93,18 @@
         #btn-random { background-color: #7b1fa2; }
         
         /* 戻るボタン */
-        .back-btn { background-color: #90a4ae; font-size: 16px; padding: 10px 20px; margin-top: 20px; }
+        .back-btn { background-color: #90a4ae; font-size: 16px; padding: 10px 20px; margin-top: 20px; display: inline-block; width: auto; }
 
         .urinal-container {
-            display: flex;
-            justify-content: center;
-            gap: 12px;
-            margin-bottom: 20px;
-            padding: 25px;
-            background-color: rgba(255, 255, 255, 0.9);
-            border-radius: 20px;
-            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
             display: inline-flex;
-            flex-wrap: wrap;
-            max-width: 90%;
+            flex-direction: column; /* ★ここが最大のポイント！要素を縦に並べる魔法 */
+            align-items: center;    /* ★縦に並べた上で中央揃えにする */
+            gap: 16px;              /* ★縦の隙間を広げて、誤タップを防ぐ */
+            margin-bottom: 20px;
+            padding: 30px 40px;     /* 横枠の余白を少し広げる */
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 30px;    /* 角の丸みを強くしてスマホアプリっぽく */
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
             border: 4px solid transparent;
             transition: border-color 0.3s;
         }
@@ -111,13 +113,13 @@
         .turn-cpu { border-color: #ffcdd2; }
 
         .urinal {
-            width: 65px;
-            height: 85px;
-            font-size: 35px;
+            width: 90px;            /* ★スマホの指で押しやすいように横幅を拡大 */
+            height: 90px;           /* ★高さも広げて、ほぼ正方形の押しやすい形に */
+            font-size: 45px;        /* ★中の絵文字も大きく見やすく */
             cursor: pointer;
             background-color: #f5f5f5;
             border: 3px solid #cfd8dc;
-            border-radius: 12px;
+            border-radius: 16px;    /* ★丸みを強くしてボタンっぽく */
             transition: all 0.2s;
             display: flex;
             align-items: center;
@@ -125,13 +127,13 @@
         }
         .urinal:hover {
             background-color: #eceff1;
-            transform: scale(1.08);
+            transform: scale(1.05);
             box-shadow: 0 4px 8px rgba(0,0,0,0.15);
         }
         
         @keyframes popIn {
             0% { transform: scale(0.5); opacity: 0; }
-            70% { transform: scale(1.2); }
+            70% { transform: scale(1.1); }
             100% { transform: scale(1); opacity: 1; }
         }
 
@@ -151,7 +153,7 @@
             background-color: #fff9c4;
             border-color: #fbc02d;
             cursor: not-allowed;
-            font-size: 30px;
+            font-size: 35px; /* 清掃中の絵文字も少し大きく */
         }
         .occupied-player:hover, .occupied-cpu:hover, .cleaning:hover {
             transform: none;
@@ -160,22 +162,25 @@
         
         #info-panel { margin-bottom: 20px; }
         #message {
-            font-size: 24px;
+            font-size: 20px; /* スマホ画面に合わせて文字サイズを少し調整 */
             font-weight: bold;
             min-height: 40px;
-            padding: 10px 25px;
+            padding: 10px 20px;
             border-radius: 50px;
             background-color: #ffffff;
             display: inline-block;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             transition: all 0.3s;
+            width: 85%;
+            max-width: 350px;
         }
         
         #result-buttons {
             display: none;
+            flex-direction: column; /* 結果画面のボタンも縦並びにする */
             gap: 15px;
-            justify-content: center;
-            margin-top: 10px;
+            align-items: center;
+            margin-top: 15px;
         }
         
         #retry-btn { background-color: #00897b; }
