@@ -9,30 +9,31 @@
     <link rel="manifest" href="manifest.json">
 
     <title>トイレ配列ゲーム(難易度＆画面遷移版)</title>
-    <style>
+<style>
         body {
             font-family: 'Helvetica Neue', Arial, sans-serif;
             text-align: center;
             background: linear-gradient(135deg, #e0f7fa 0%, #80deea 100%);
             min-height: 100vh;
             margin: 0;
-            padding-top: 30px;
-            padding-bottom: 50px; /* スクロールしきれるように下部の余白を追加 */
+            padding-top: 20px;
+            overflow-x: hidden; /* 横スクロールを絶対に防ぐ */
         }
         h2 { 
             color: #006064; 
             text-shadow: 1px 1px 2px rgba(255,255,255,0.8);
             margin-bottom: 10px;
+            font-size: 24px;
         }
         
         #stats-panel {
             background-color: rgba(255, 255, 255, 0.9);
-            padding: 10px 20px;
+            padding: 10px 15px;
             border-radius: 50px;
             display: inline-block;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            font-size: 18px;
+            font-size: 16px;
             font-weight: bold;
             color: #37474f;
         }
@@ -41,7 +42,7 @@
         #reset-stats-btn {
             font-size: 12px;
             padding: 5px 10px;
-            margin-left: 15px;
+            margin-left: 10px;
             background-color: #cfd8dc;
             color: #455a64;
             border: none;
@@ -49,62 +50,59 @@
             cursor: pointer;
             transition: 0.2s;
         }
-        #reset-stats-btn:hover { background-color: #b0bec5; }
 
-        /* 画面のパネル共通スタイル */
         .screen-panel {
             background-color: rgba(255, 255, 255, 0.95);
-            padding: 40px 20px; /* スマホ向けに横のパディングを調整 */
+            padding: 20px 10px;
             border-radius: 20px;
             box-shadow: 0 8px 16px rgba(0,0,0,0.1);
             display: inline-block;
             margin-top: 10px;
-            width: 85%; /* 画面幅に合わせる */
-            max-width: 400px;
+            width: 95%;
+            max-width: 500px;
         }
         
-        /* 最初は難易度画面以外を隠す */
         #turn-screen, #game-screen { display: none; }
 
         .btn {
-            font-size: 20px;
+            font-size: 18px;
             font-weight: bold;
-            padding: 15px 30px;
-            margin: 10px auto;
+            padding: 12px 20px;
+            margin: 8px auto;
             border: none;
             border-radius: 50px;
             cursor: pointer;
             color: white;
-            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transition: all 0.2s;
             box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-            display: block; /* ボタンも縦に並べやすくする */
+            display: block;
             width: 80%;
         }
-        .btn:hover { transform: translateY(-3px); box-shadow: 0 6px 12px rgba(0,0,0,0.3); }
         
-        /* 難易度ボタンの色 */
         #btn-easy { background-color: #4caf50; }
         #btn-normal { background-color: #ff9800; }
         #btn-hard { background-color: #e53935; }
-
-        /* ターンボタンの色 */
         #btn-first { background-color: #1976d2; }
         #btn-second { background-color: #d32f2f; }
         #btn-random { background-color: #7b1fa2; }
         
-        /* 戻るボタン */
-        .back-btn { background-color: #90a4ae; font-size: 16px; padding: 10px 20px; margin-top: 20px; display: inline-block; width: auto; }
+        .back-btn { background-color: #90a4ae; font-size: 16px; padding: 10px 20px; margin-top: 15px; display: inline-block; width: auto; }
 
+        /* ★ここが画面にピッタリ収める魔法の枠 */
         .urinal-container {
-            display: inline-flex;
-            flex-direction: column; /* ★ここが最大のポイント！要素を縦に並べる魔法 */
-            align-items: center;    /* ★縦に並べた上で中央揃えにする */
-            gap: 16px;              /* ★縦の隙間を広げて、誤タップを防ぐ */
+            display: flex;
+            flex-direction: row;     /* 横並びに戻す */
+            flex-wrap: nowrap;       /* 絶対に折り返さない（1行をキープ） */
+            justify-content: center;
+            align-items: center;
+            gap: 1%;                 /* 隙間も画面幅に対するパーセントにする */
             margin-bottom: 20px;
-            padding: 30px 40px;     /* 横枠の余白を少し広げる */
+            padding: 15px 5px;
             background-color: rgba(255, 255, 255, 0.9);
-            border-radius: 30px;    /* 角の丸みを強くしてスマホアプリっぽく */
+            border-radius: 20px;
             box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+            width: 100%;             /* 画面幅いっぱいまで使う */
+            box-sizing: border-box;
             border: 4px solid transparent;
             transition: border-color 0.3s;
         }
@@ -112,23 +110,32 @@
         .turn-player { border-color: #bbdefb; }
         .turn-cpu { border-color: #ffcdd2; }
 
+        /* ★ここがサイズを自動調整する魔法のボタン */
         .urinal {
-            width: 90px;            /* ★スマホの指で押しやすいように横幅を拡大 */
-            height: 90px;           /* ★高さも広げて、ほぼ正方形の押しやすい形に */
-            font-size: 45px;        /* ★中の絵文字も大きく見やすく */
+            width: 8vw;              /* 画面幅の8%のサイズにする */
+            height: 12vw;            /* 画面幅の12%の高さにする */
+            max-width: 45px;         /* PCで見た時に大きくなりすぎないように制限 */
+            max-height: 65px;
+            font-size: 5vw;          /* 絵文字も画面幅の5%のサイズにする */
             cursor: pointer;
             background-color: #f5f5f5;
-            border: 3px solid #cfd8dc;
-            border-radius: 16px;    /* ★丸みを強くしてボタンっぽく */
+            border: 2px solid #cfd8dc;
+            border-radius: 8px;
             transition: all 0.2s;
             display: flex;
             align-items: center;
             justify-content: center;
         }
+        
+        @media (min-width: 600px) {
+            /* パソコンやタブレットの時は文字サイズを固定する */
+            .urinal { font-size: 28px; }
+            .cleaning { font-size: 20px !important; }
+        }
+
         .urinal:hover {
             background-color: #eceff1;
-            transform: scale(1.05);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+            transform: scale(1.1);
         }
         
         @keyframes popIn {
@@ -137,52 +144,31 @@
             100% { transform: scale(1); opacity: 1; }
         }
 
-        .occupied-player {
-            background-color: #bbdefb;
-            border-color: #42a5f5;
-            cursor: not-allowed;
-            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-        }
-        .occupied-cpu {
-            background-color: #ffcdd2;
-            border-color: #ef5350;
-            cursor: not-allowed;
-            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-        }
+        .occupied-player { background-color: #bbdefb; border-color: #42a5f5; cursor: not-allowed; animation: popIn 0.3s forwards; }
+        .occupied-cpu { background-color: #ffcdd2; border-color: #ef5350; cursor: not-allowed; animation: popIn 0.3s forwards; }
+        
         .cleaning {
             background-color: #fff9c4;
             border-color: #fbc02d;
             cursor: not-allowed;
-            font-size: 35px; /* 清掃中の絵文字も少し大きく */
-        }
-        .occupied-player:hover, .occupied-cpu:hover, .cleaning:hover {
-            transform: none;
-            box-shadow: none;
+            font-size: 4vw; /* 清掃中の絵文字も画面幅に合わせる */
         }
         
         #info-panel { margin-bottom: 20px; }
         #message {
-            font-size: 20px; /* スマホ画面に合わせて文字サイズを少し調整 */
+            font-size: 18px;
             font-weight: bold;
-            min-height: 40px;
-            padding: 10px 20px;
+            min-height: 30px;
+            padding: 10px 15px;
             border-radius: 50px;
             background-color: #ffffff;
             display: inline-block;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            transition: all 0.3s;
-            width: 85%;
+            width: 90%;
             max-width: 350px;
         }
         
-        #result-buttons {
-            display: none;
-            flex-direction: column; /* 結果画面のボタンも縦並びにする */
-            gap: 15px;
-            align-items: center;
-            margin-top: 15px;
-        }
-        
+        #result-buttons { display: none; flex-direction: column; gap: 10px; align-items: center; margin-top: 15px; }
         #retry-btn { background-color: #00897b; }
         #title-btn { background-color: #546e7a; }
 
